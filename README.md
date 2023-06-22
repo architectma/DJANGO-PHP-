@@ -80,6 +80,7 @@ Replace views.line_callback, views.apple_callback, etc., with the actual callbac
 
 In the project's urls.py file, include the URL patterns from the app:
 
+
 python
 Copy code
 from django.contrib import admin
@@ -98,3 +99,11 @@ from django.shortcuts import redirect
 
 def line_callback(request):
     # Line SSO callback implementation
+
+
+
+
+
+
+
+REFRENCE LINK:https://github.com/architectma/DJANGO-PHP-/edit/main/README.md
