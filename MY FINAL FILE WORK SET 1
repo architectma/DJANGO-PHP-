@@ -1,0 +1,447 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyPRVPdCdwtdTU65xZKItIIN",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/architectma/DJANGO-PHP-/blob/main/MY%20FINAL%20FILE%20WORK%20SET%201\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "MY PORTFOLIO WORK"
+      ],
+      "metadata": {
+        "id": "kWOuZaUbOPkO"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "System Concept\n",
+        "Users can deposit and withdraw funds\n",
+        "System encrypts sensitive info\n",
+        "All data saved locally in JSON for offline use"
+      ],
+      "metadata": {
+        "id": "MPuV5al3RN-J"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Users can deposit and withdraw funds\n",
+        "System encrypts sensitive info\n",
+        "All data saved locally in JSON for offline use"
+      ],
+      "metadata": {
+        "id": "RW3Hv5UzRP7q"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Data Layout"
+      ],
+      "metadata": {
+        "id": "H0sO1VGeRSCC"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "{\n",
+        "  \"maria\": {\n",
+        "    \"passwd_hash\": \"hashed_value\",\n",
+        "    \"funds\": 500.0,\n",
+        "    \"recovery_pin\": \"xyz789\"\n",
+        "  }\n",
+        "}"
+      ],
+      "metadata": {
+        "id": "lonv0RsiRT2x"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Security Utility"
+      ],
+      "metadata": {
+        "id": "LKvl_wUMRXeI"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import hashlib\n",
+        "import secrets\n",
+        "import re\n",
+        "\n",
+        "def hash_password(password):\n",
+        "    return hashlib.sha256(password.encode()).hexdigest()\n",
+        "\n",
+        "def is_strong_password(password):\n",
+        "    rules = [\n",
+        "        len(password) >= 8,\n",
+        "        re.search(r\"[A-Z]\", password),\n",
+        "        re.search(r\"[0-9]\", password),\n",
+        "        re.search(r\"[!@#$%^&*]\", password)\n",
+        "    ]\n",
+        "    return all(rules)\n",
+        "\n",
+        "def generate_recovery():\n",
+        "    return secrets.token_hex(6)\n",
+        "\n",
+        "def valid_username(name):\n",
+        "    return bool(re.fullmatch(r\"[A-Za-z0-9_]+\", name))"
+      ],
+      "metadata": {
+        "id": "261R6dklRZtT"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Storage Functions"
+      ],
+      "metadata": {
+        "id": "Jh-c0RXFRbr7"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import json\n",
+        "import os\n",
+        "\n",
+        "DB_FILE = \"vault_users.json\"\n",
+        "\n",
+        "def load_users():\n",
+        "    if not os.path.exists(DB_FILE):\n",
+        "        return {}\n",
+        "    try:\n",
+        "        return json.load(open(DB_FILE))\n",
+        "    except:\n",
+        "        return {}\n",
+        "\n",
+        "def save_users(data):\n",
+        "    json.dump(data, open(DB_FILE, \"w\"), indent=4)"
+      ],
+      "metadata": {
+        "id": "-WnbSZ94RdSR"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Audit Logging"
+      ],
+      "metadata": {
+        "id": "NyE3tv5lRe5K"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def log_event(msg):\n",
+        "    with open(\"vault_history.log\", \"a\") as f:\n",
+        "        f.write(msg + \"\\n\")"
+      ],
+      "metadata": {
+        "id": "zI8wTU48RgIh"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "User Registration"
+      ],
+      "metadata": {
+        "id": "ajHvkmnqRhy8"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from vault_utils import *\n",
+        "from vault_main import load_users, save_users, log_event\n",
+        "\n",
+        "def register_user():\n",
+        "    users = load_users()\n",
+        "    uname = input(\"Enter new username: \")\n",
+        "\n",
+        "    if not valid_username(uname):\n",
+        "        print(\"Invalid username\")\n",
+        "        return\n",
+        "\n",
+        "    if uname in users:\n",
+        "        print(\"Username already exists\")\n",
+        "        return\n",
+        "\n",
+        "    passwd = input(\"Enter password: \")\n",
+        "    if not is_strong_password(passwd):\n",
+        "        print(\"Password too weak\")\n",
+        "        return\n",
+        "\n",
+        "    users[uname] = {\n",
+        "        \"passwd_hash\": hash_password(passwd),\n",
+        "        \"funds\": 0.0,\n",
+        "        \"recovery_pin\": generate_recovery()\n",
+        "    }\n",
+        "\n",
+        "    save_users(users)\n",
+        "    log_event(f\"USER REGISTERED: {uname}\")\n",
+        "    print(\"Account created successfully\")\n",
+        "    print(\"Recovery PIN:\", users[uname][\"recovery_pin\"])"
+      ],
+      "metadata": {
+        "id": "nY9wm6_uRqaw"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Login System"
+      ],
+      "metadata": {
+        "id": "6jN_IYeaRsla"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def login_user():\n",
+        "    users = load_users()\n",
+        "    attempts = 0\n",
+        "\n",
+        "    while attempts < 3:\n",
+        "        uname = input(\"Username: \")\n",
+        "        passwd = input(\"Password: \")\n",
+        "\n",
+        "        if uname in users and users[uname][\"passwd_hash\"] == hash_password(passwd):\n",
+        "            print(\"Login successful\")\n",
+        "            log_event(f\"LOGIN SUCCESS: {uname}\")\n",
+        "            user_dashboard(uname, users)\n",
+        "            return\n",
+        "        else:\n",
+        "            print(\"Login failed\")\n",
+        "            log_event(f\"LOGIN FAIL: {uname}\")\n",
+        "            attempts += 1\n",
+        "\n",
+        "    print(\"Account locked temporarily\")"
+      ],
+      "metadata": {
+        "id": "VNc0AYNpRt8w"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "User Dashboard"
+      ],
+      "metadata": {
+        "id": "NIgmkc3dRvyR"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def user_dashboard(uname, users):\n",
+        "    while True:\n",
+        "        print(\"\\n1. Check Funds 2. Deposit 3. Withdraw 4. Change Password 5. Logout\")\n",
+        "        choice = input(\"Select option: \")\n",
+        "\n",
+        "        if choice == \"1\":\n",
+        "            print(\"Current funds:\", users[uname][\"funds\"])\n",
+        "\n",
+        "        elif choice == \"2\":\n",
+        "            amt = float(input(\"Deposit amount: \"))\n",
+        "            if amt > 0:\n",
+        "                users[uname][\"funds\"] += amt\n",
+        "                save_users(users)\n",
+        "                log_event(f\"DEPOSIT {amt} -> {uname}\")\n",
+        "\n",
+        "        elif choice == \"3\":\n",
+        "            amt = float(input(\"Withdraw amount: \"))\n",
+        "            if 0 < amt <= users[uname][\"funds\"]:\n",
+        "                users[uname][\"funds\"] -= amt\n",
+        "                save_users(users)\n",
+        "                log_event(f\"WITHDRAW {amt} -> {uname}\")\n",
+        "            else:\n",
+        "                print(\"Invalid amount\")\n",
+        "\n",
+        "        elif choice == \"4\":\n",
+        "            new_pass = input(\"New password: \")\n",
+        "            if not is_strong_password(new_pass):\n",
+        "                print(\"Weak password\")\n",
+        "                continue\n",
+        "\n",
+        "            users[uname][\"passwd_hash\"] = hash_password(new_pass)\n",
+        "            save_users(users)\n",
+        "            log_event(f\"PASSWORD UPDATED: {uname}\")\n",
+        "\n",
+        "        elif choice == \"5\":\n",
+        "            break"
+      ],
+      "metadata": {
+        "id": "Af2SZ5LnRxLC"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "                   ┌─────────────┐\n",
+        "                   │ Main Menu   │\n",
+        "                   │ 1.Register  │\n",
+        "                   │ 2.Login     │\n",
+        "                   │ 3.Recover   │\n",
+        "                   │ 4.Exit      │\n",
+        "                   └─────┬───────┘\n",
+        "                         │\n",
+        "         ┌───────────────┼───────────────┐\n",
+        "         │                               │\n",
+        "   ┌───────────────┐               ┌───────────────┐\n",
+        "   │ Register User │               │ Login User    │\n",
+        "   └─────┬─────────┘               └─────┬─────────┘\n",
+        "         │                               │\n",
+        "   ┌─────▼───────┐               ┌──────▼────────┐\n",
+        "   │ Validate     │               │ Validate       │\n",
+        "   │ Username &   │               │ Credentials    │\n",
+        "   │ Password     │               └─────┬─────────┘\n",
+        "   └─────┬───────┘                     │\n",
+        "         │                             │\n",
+        "   ┌─────▼────────┐              ┌─────▼────────┐\n",
+        "   │ Save User    │              │ Access Granted│\n",
+        "   │ Data & Log   │              └─────┬────────┘\n",
+        "   └─────┬────────┘                     │\n",
+        "         │                             │\n",
+        "     ┌───▼───────────┐           ┌─────▼───────────┐\n",
+        "     │ Confirmation  │           │ User Dashboard  │\n",
+        "     │ & Recovery PIN│           │ 1.Check Funds   │\n",
+        "     └───────────────┘           │ 2.Deposit       │\n",
+        "                                 │ 3.Withdraw      │\n",
+        "                                 │ 4.Change PW     │\n",
+        "                                 │ 5.Logout        │\n",
+        "                                 └─────┬───────────┘\n",
+        "                                       │\n",
+        "                                  ┌────▼─────┐\n",
+        "                                  │ Logout / │\n",
+        "                                  │ Exit     │\n",
+        "                                  └──────────┘\n"
+      ],
+      "metadata": {
+        "id": "X-PmQy7YSBSy"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Recovery Feature"
+      ],
+      "metadata": {
+        "id": "ozYhhwqaRypZ"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def recover_account():\n",
+        "    users = load_users()\n",
+        "    uname = input(\"Username: \")\n",
+        "    pin = input(\"Recovery PIN: \")\n",
+        "\n",
+        "    if uname in users and users[uname][\"recovery_pin\"] == pin:\n",
+        "        new_pass = input(\"New password: \")\n",
+        "        if not is_strong_password(new_pass):\n",
+        "            print(\"Weak password\")\n",
+        "            return\n",
+        "\n",
+        "        users[uname][\"passwd_hash\"] = hash_password(new_pass)\n",
+        "        save_users(users)\n",
+        "        log_event(f\"PASSWORD RECOVERED: {uname}\")\n",
+        "        print(\"Password reset successful\")\n",
+        "    else:\n",
+        "        print(\"Verification failed\")"
+      ],
+      "metadata": {
+        "id": "wyY-eAiaRz4N"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Main Program Flow"
+      ],
+      "metadata": {
+        "id": "nwHxqIZeR1YS"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def main_menu():\n",
+        "    while True:\n",
+        "        print(\"\\n1.Register 2.Login 3.Recover 4.Exit\")\n",
+        "        opt = input(\"Enter choice: \")\n",
+        "\n",
+        "        if opt == \"1\":\n",
+        "            register_user()\n",
+        "        elif opt == \"2\":\n",
+        "            login_user()\n",
+        "        elif opt == \"3\":\n",
+        "            recover_account()\n",
+        "        elif opt == \"4\":\n",
+        "            break\n",
+        "        else:\n",
+        "            print(\"Invalid option\")\n",
+        "\n",
+        "if __name__ == \"__main__\":\n",
+        "    main_menu()"
+      ],
+      "metadata": {
+        "id": "qdCNpUIlR2w8"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
